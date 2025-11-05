@@ -74,10 +74,6 @@ When backend is ready:
 2. Uncomment API calls in page components
 3. Comment out mock data imports
 
-## � License
-
-MIT
-
 # Run container
 docker run -p 8080:80 rl-arena-web
 ```
@@ -123,10 +119,6 @@ The frontend expects the following backend endpoints:
 3. Commit your changes (`git commit -m 'Add amazing feature'`)
 4. Push to the branch (`git push origin feature/amazing-feature`)
 5. Open a Pull Request
-
-## 📄 License
-
-This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
 
 ## 🙏 Acknowledgments
 

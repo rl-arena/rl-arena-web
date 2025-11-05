@@ -2,8 +2,7 @@ import React, { useEffect, useState } from 'react'
 import { getUserProfile } from '../services/api'
 import useAuth from '../hooks/useAuth'
 import LoadingSpinner from '../components/common/LoadingSpinner'
-import Card from '../components/common/Card'
-import { formatRelativeTime, formatPercentage, formatNumber } from '../utils/formatters'
+import { formatRelativeTime } from '../utils/formatters'
 
 const Profile = () => {
   const { user, isAuthenticated } = useAuth()
@@ -33,19 +32,19 @@ const Profile = () => {
   if (!isAuthenticated) {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-        <Card className="max-w-md">
+        <div className="bg-white border border-gray-200 rounded-lg p-8 max-w-md">
           <div className="text-center">
-            <h2 className="text-2xl font-bold text-gray-900 mb-4">
+            <h2 className="text-xl font-semibold text-gray-900 mb-4">
               Sign In Required
             </h2>
             <p className="text-gray-600 mb-6">
               Please sign in to view your profile
             </p>
-            <button className="btn-primary">
+            <button className="bg-primary-500 hover:bg-primary-600 text-white px-4 py-2 rounded-md">
               Sign In
             </button>
           </div>
-        </Card>
+        </div>
       </div>
     )
   }
@@ -53,7 +52,7 @@ const Profile = () => {
   if (loading) {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-        <LoadingSpinner size="lg" text="Loading profile..." />
+        <LoadingSpinner size="lg" />
       </div>
     )
   }
@@ -61,14 +60,14 @@ const Profile = () => {
   if (error) {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-        <Card className="max-w-md">
+        <div className="bg-white border border-gray-200 rounded-lg p-8 max-w-md">
           <div className="text-center">
             <p className="text-red-600 mb-4">{error}</p>
-            <button onClick={loadProfile} className="btn-primary">
+            <button onClick={loadProfile} className="bg-primary-500 hover:bg-primary-600 text-white px-4 py-2 rounded-md">
               Try Again
             </button>
           </div>
-        </Card>
+        </div>
       </div>
     )
   }

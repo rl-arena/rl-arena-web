@@ -53,47 +53,139 @@ api.interceptors.response.use(
 
 // API Methods
 
+// ======================
+// Environments (Competitions)
+// ======================
+
 /**
- * Get all competitions
- * @returns {Promise<Array>} List of competitions
+ * Get all environments
+ * @returns {Promise<Array>} List of environments
+ * 
+ * Note: Backend doesn't have /environments endpoint yet.
+ * Using hardcoded environment list from local data.
  */
-export const getCompetitions = async () => {
-  const response = await api.get('/competitions')
+export const getEnvironments = async () => {
+  // Import here to avoid circular dependency
+  const { ENVIRONMENTS } = await import('../data/environments.js')
+  
+  // Simulate API delay
+  await new Promise(resolve => setTimeout(resolve, 300))
+  
+  return ENVIRONMENTS
+}
+
+/**
+ * Get single environment by ID
+ * @param {string} envId - Environment ID
+ * @returns {Promise<Object>} Environment details
+ * 
+ * Note: Backend doesn't have /environments/:id endpoint yet.
+ * Using hardcoded environment list from local data.
+ */
+export const getEnvironment = async (envId) => {
+  const { getEnvironmentById } = await import('../data/environments.js')
+  
+  // Simulate API delay
+  await new Promise(resolve => setTimeout(resolve, 200))
+  
+  const environment = getEnvironmentById(envId)
+  if (!environment) {
+    throw new Error(`Environment '${envId}' not found`)
+  }
+  
+  return environment
+}
+
+// Aliases for backward compatibility
+export const getCompetitions = getEnvironments
+export const getCompetition = getEnvironment
+
+// ======================
+// Agents
+// ======================
+
+/**
+ * Get all my agents
+ * @param {Object} filters - Optional filters (e.g., { environmentId })
+ * @returns {Promise<Array>} List of agents
+ */
+export const getMyAgents = async (filters = {}) => {
+  const response = await api.get('/agents/my', { params: filters })
   return response.data
 }
 
 /**
- * Get single competition by ID
- * @param {string} envId - Competition ID
- * @returns {Promise<Object>} Competition details
+ * Get specific agent by ID
+ * @param {string} agentId - Agent ID
+ * @returns {Promise<Object>} Agent details
  */
-export const getCompetition = async (envId) => {
-  const response = await api.get(`/competitions/${envId}`)
+export const getAgent = async (agentId) => {
+  const response = await api.get(`/agents/${agentId}`)
   return response.data
 }
 
 /**
- * Get leaderboard for a competition
- * @param {string} envId - Competition ID
- * @param {number} page - Page number
- * @param {number} limit - Items per page
- * @returns {Promise<Object>} Leaderboard data with pagination
+ * Create new agent
+ * @param {Object} agentData - { name, description, environmentId }
+ * @returns {Promise<Object>} Created agent
  */
-export const getLeaderboard = async (envId, page = 1, limit = 20) => {
-  const response = await api.get(`/competitions/${envId}/leaderboard`, {
-    params: { page, limit }
-  })
+export const createAgent = async (agentData) => {
+  const response = await api.post('/agents', agentData)
   return response.data
 }
 
 /**
- * Submit agent to competition
- * @param {string} envId - Competition ID
- * @param {FormData} formData - Form data with file and agent name
+ * Update agent
+ * @param {string} agentId - Agent ID
+ * @param {Object} updates - { name, description }
+ * @returns {Promise<Object>} Updated agent
+ */
+export const updateAgent = async (agentId, updates) => {
+  const response = await api.put(`/agents/${agentId}`, updates)
+  return response.data
+}
+
+/**
+ * Delete agent
+ * @param {string} agentId - Agent ID
+ * @returns {Promise<Object>} Deletion confirmation
+ */
+export const deleteAgent = async (agentId) => {
+  const response = await api.delete(`/agents/${agentId}`)
+  return response.data
+}
+
+// ======================
+// Submissions
+// ======================
+
+/**
+ * Create code submission for agent
+ * @param {Object} submissionData - { agentId, codeUrl }
  * @returns {Promise<Object>} Submission result
  */
-export const submitAgent = async (envId, formData) => {
-  const response = await api.post(`/competitions/${envId}/submit`, formData, {
+export const createSubmission = async (submissionData) => {
+  const response = await api.post('/submissions', submissionData)
+  return response.data
+}
+
+/**
+ * Submit agent code file (create submission with file upload)
+ * @param {string} agentId - Agent ID (not envId)
+ * @param {FormData} formData - Form data with file
+ * @returns {Promise<Object>} Submission result
+ * 
+ * Backend expects:
+ * - agentId: string (form field)
+ * - file: File (multipart file)
+ */
+export const submitAgent = async (agentId, formData) => {
+  // Add agentId to formData if not already present
+  if (!formData.has('agentId')) {
+    formData.append('agentId', agentId)
+  }
+  
+  const response = await api.post('/submissions', formData, {
     headers: {
       'Content-Type': 'multipart/form-data',
     },
@@ -102,12 +194,124 @@ export const submitAgent = async (envId, formData) => {
 }
 
 /**
- * Get user's submissions for a competition
- * @param {string} envId - Competition ID
+ * Get specific submission by ID
+ * @param {string} submissionId - Submission ID
+ * @returns {Promise<Object>} Submission details
+ */
+export const getSubmission = async (submissionId) => {
+  const response = await api.get(`/submissions/${submissionId}`)
+  return response.data
+}
+
+/**
+ * Get all submissions for an agent
+ * @param {string} agentId - Agent ID
+ * @param {number} page - Page number
+ * @param {number} pageSize - Items per page
+ * @returns {Promise<Object>} Paginated submissions
+ */
+export const getAgentSubmissions = async (agentId, page = 1, pageSize = 20) => {
+  const response = await api.get(`/submissions/agent/${agentId}`, {
+    params: { page, pageSize }
+  })
+  return response.data
+}
+
+/**
+ * Get user's submissions for a specific environment
+ * @param {string} envId - Environment ID
  * @returns {Promise<Array>} List of submissions
+ * 
+ * Implementation: Get user's agents for this environment, then get submissions for each agent
  */
 export const getUserSubmissions = async (envId) => {
-  const response = await api.get(`/competitions/${envId}/submissions`)
+  try {
+    // 1. Get user's agents for this environment
+    const myAgentsResponse = await getMyAgents({ environmentId: envId })
+    const agents = myAgentsResponse.agents || []
+    
+    if (agents.length === 0) {
+      return { submissions: [] }
+    }
+    
+    // 2. Get submissions for each agent
+    const submissionsPromises = agents.map(agent => 
+      getAgentSubmissions(agent.id).catch(() => ({ submissions: [] }))
+    )
+    
+    const submissionsResults = await Promise.all(submissionsPromises)
+    
+    // 3. Flatten and combine all submissions
+    const allSubmissions = submissionsResults.flatMap(result => 
+      result.submissions || []
+    )
+    
+    // 4. Sort by createdAt (newest first)
+    allSubmissions.sort((a, b) => 
+      new Date(b.createdAt) - new Date(a.createdAt)
+    )
+    
+    return { submissions: allSubmissions }
+  } catch (error) {
+    console.error('getUserSubmissions error:', error)
+    return { submissions: [] }
+  }
+}
+
+/**
+ * Activate a submission (set as active version)
+ * @param {string} submissionId - Submission ID
+ * @returns {Promise<Object>} Activated submission
+ */
+export const activateSubmission = async (submissionId) => {
+  const response = await api.put(`/submissions/${submissionId}/activate`)
+  return response.data
+}
+
+// ======================
+// Matches
+// ======================
+
+/**
+ * Create and execute a match between two agents
+ * @param {Object} matchData - { agent1Id, agent2Id }
+ * @returns {Promise<Object>} Match result
+ */
+export const createMatch = async (matchData) => {
+  const response = await api.post('/matches', matchData)
+  return response.data
+}
+
+/**
+ * Get all matches (currently returns empty - TODO in backend)
+ * @returns {Promise<Array>} List of matches
+ */
+export const getMatches = async () => {
+  const response = await api.get('/matches')
+  return response.data
+}
+
+/**
+ * Get specific match by ID
+ * @param {string} matchId - Match ID
+ * @returns {Promise<Object>} Match details
+ */
+export const getMatch = async (matchId) => {
+  const response = await api.get(`/matches/${matchId}`)
+  return response.data
+}
+
+/**
+ * Get all matches for a specific agent
+ * @param {string} agentId - Agent ID
+ * @param {number} page - Page number
+ * @param {number} pageSize - Items per page
+ * @returns {Promise<Object>} Paginated matches
+ */
+export const getAgentMatches = async (agentId, page = 1, pageSize = 20) => {
+  const response = await api.get(`/matches/agent/${agentId}`, {
+    params: { page, pageSize }
+  })
   return response.data
 }
 
@@ -117,23 +321,46 @@ export const getUserSubmissions = async (envId) => {
  * @returns {Promise<Object>} Replay data with frames and metadata
  */
 export const getMatchReplay = async (matchId) => {
-  const response = await api.get(`/matches/${matchId}/replay`)
+  const replayUrl = `/matches/${matchId}/replay`
+  const response = await api.get(replayUrl)
+  return response.data
+}
+
+// ======================
+// Leaderboard
+// ======================
+
+/**
+ * Get global leaderboard
+ * @param {number} limit - Number of agents to return
+ * @returns {Promise<Array>} Leaderboard entries
+ */
+export const getGlobalLeaderboard = async (limit = 100) => {
+  const response = await api.get('/leaderboard', { params: { limit } })
   return response.data
 }
 
 /**
- * Get user profile
- * @returns {Promise<Object>} User profile data
+ * Get leaderboard for a specific environment
+ * @param {string} envId - Environment ID
+ * @param {number} limit - Number of agents to return
+ * @returns {Promise<Object>} Leaderboard entries with environment info
  */
-export const getUserProfile = async () => {
-  const response = await api.get('/profile')
+export const getLeaderboard = async (envId, limit = 100) => {
+  const response = await api.get(`/leaderboard/environment/${envId}`, {
+    params: { limit }
+  })
   return response.data
 }
+
+// ======================
+// Authentication
+// ======================
 
 /**
  * Login user
- * @param {Object} credentials - { email, password }
- * @returns {Promise<Object>} Auth token and user data
+ * @param {Object} credentials - { username, password }
+ * @returns {Promise<Object>} { token, user }
  */
 export const login = async (credentials) => {
   const response = await api.post('/auth/login', credentials)
@@ -142,8 +369,8 @@ export const login = async (credentials) => {
 
 /**
  * Register user
- * @param {Object} userData - { username, email, password }
- * @returns {Promise<Object>} Auth token and user data
+ * @param {Object} userData - { username, email, password, fullName }
+ * @returns {Promise<Object>} { token, user }
  */
 export const register = async (userData) => {
   const response = await api.post('/auth/register', userData)
@@ -151,11 +378,39 @@ export const register = async (userData) => {
 }
 
 /**
- * Logout user
+ * Get current user info
+ * @returns {Promise<Object>} User data
+ */
+export const getCurrentUser = async () => {
+  const response = await api.get('/users/me')
+  return response.data
+}
+
+/**
+ * Get user profile (alias for getCurrentUser)
+ * @returns {Promise<Object>} User data
+ */
+export const getUserProfile = getCurrentUser
+
+/**
+ * Logout user (client-side only - clear token)
  * @returns {Promise<void>}
  */
 export const logout = async () => {
-  const response = await api.post('/auth/logout')
+  localStorage.removeItem('auth_token')
+  return Promise.resolve()
+}
+
+// ======================
+// Health Check
+// ======================
+
+/**
+ * Check API health status
+ * @returns {Promise<Object>} { status, timestamp }
+ */
+export const checkHealth = async () => {
+  const response = await api.get('/health')
   return response.data
 }
 

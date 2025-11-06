@@ -2,16 +2,9 @@ import React, { useEffect } from 'react'
 import CompetitionCard from '../components/competition/CompetitionCard'
 import LoadingSpinner from '../components/common/LoadingSpinner'
 import useCompetitions from '../hooks/useCompetitions'
-// Uncomment below to use mock data during development
-import { mockCompetitions } from '../mocks/competitions'
 
 const Home = () => {
-  // const { competitions, loading, error, fetchCompetitions } = useCompetitions(true)
-
-  // Use mock data during development
-  const competitions = mockCompetitions
-  const loading = false
-  const error = null
+  const { competitions, loading, error, fetchCompetitions } = useCompetitions(true)
 
   return (
     <div className="min-h-screen bg-gray-50">

@@ -9,69 +9,53 @@ import LoadingSpinner from '../components/common/LoadingSpinner'
 import useCompetitions from '../hooks/useCompetitions'
 import useLeaderboard from '../hooks/useLeaderboard'
 import { getUserSubmissions } from '../services/api'
-// Use mock data during development
-import { mockCompetitions, mockLeaderboard, mockSubmissions } from '../mocks/competitions'
 
 const CompetitionDetail = () => {
   const { envId } = useParams()
-  // const { fetchCompetition, selectedCompetition, loading: competitionLoading } = useCompetitions(false)
+  const { fetchCompetition, selectedCompetition, loading: competitionLoading } = useCompetitions(false)
   const [submissions, setSubmissions] = useState([])
   const [submissionsLoading, setSubmissionsLoading] = useState(false)
   const [replayModal, setReplayModal] = useState({ isOpen: false, matchId: null, metadata: {} })
 
-  // Leaderboard hook (commented out for mock data)
-  // const {
-  //   data: leaderboardData,
-  //   loading: leaderboardLoading,
-  //   page,
-  //   totalPages,
-  //   goToPage,
-  //   sort,
-  //   sortBy,
-  //   sortOrder,
-  //   refresh: refreshLeaderboard,
-  // } = useLeaderboard(envId)
+  // Leaderboard hook
+  const {
+    data: leaderboardData,
+    loading: leaderboardLoading,
+    page,
+    totalPages,
+    goToPage,
+    sort,
+    sortBy,
+    sortOrder,
+    refresh: refreshLeaderboard,
+  } = useLeaderboard(envId)
 
-  // Use mock data during development
-  const selectedCompetition = mockCompetitions.find(c => c.id === envId)
-  const competitionLoading = false
-  const leaderboardData = mockLeaderboard
-  const leaderboardLoading = false
-
-  // Fetch competition data (commented out for mock data)
-  // useEffect(() => {
-  //   if (envId) {
-  //     fetchCompetition(envId)
-  //     loadSubmissions()
-  //   }
-  // }, [envId]) // eslint-disable-line react-hooks/exhaustive-deps
-
+  // Fetch competition data
   useEffect(() => {
     if (envId) {
-      setSubmissions(mockSubmissions)
+      fetchCompetition(envId)
+      loadSubmissions()
+    }
+  }, [envId]) // eslint-disable-line react-hooks/exhaustive-deps
+
+  // Load user submissions
+  const loadSubmissions = async () => {
+    setSubmissionsLoading(true)
+    try {
+      const data = await getUserSubmissions(envId)
+      setSubmissions(data.submissions || [])
+    } catch (error) {
+      console.error('Failed to load submissions:', error)
+      setSubmissions([])
+    } finally {
       setSubmissionsLoading(false)
     }
-  }, [envId])
-
-  // Load user submissions (commented out for mock data)
-  // const loadSubmissions = async () => {
-  //   setSubmissionsLoading(true)
-  //   try {
-  //     const data = await getUserSubmissions(envId)
-  //     setSubmissions(data)
-  //   } catch (error) {
-  //     console.error('Failed to load submissions:', error)
-  //     setSubmissions([])
-  //   } finally {
-  //     setSubmissionsLoading(false)
-  //   }
-  // }
+  }
 
   // Handle successful submission
   const handleSubmissionSuccess = () => {
-    // loadSubmissions()
-    // refreshLeaderboard()
-    setSubmissions(mockSubmissions)
+    loadSubmissions()
+    refreshLeaderboard()
   }
 
   // Handle watch replay

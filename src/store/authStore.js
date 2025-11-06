@@ -2,7 +2,7 @@ import { create } from 'zustand'
 import { login as apiLogin, logout as apiLogout, register as apiRegister } from '../services/api'
 import { setAuthToken, setUser, clearAuth, getAuthToken, getUser } from '../services/storage'
 
-const useAuthStore = create((set) => ({
+const useAuthStore = create((set, get) => ({
   user: getUser(),
   token: getAuthToken(),
   isAuthenticated: !!getAuthToken(),

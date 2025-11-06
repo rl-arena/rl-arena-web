@@ -32,11 +32,9 @@ api.interceptors.response.use(
       // Server responded with error status
       const { status, data } = error.response
       
-      if (status === 401) {
-        // Unauthorized - clear token and redirect to login
-        localStorage.removeItem('auth_token')
-        window.location.href = '/login'
-      }
+      // Note: We don't automatically clear auth on 401
+      // to prevent logout when accessing protected resources while not logged in
+      // Components should handle auth requirements themselves
       
       // Return user-friendly error message
       const message = data?.message || data?.error || 'An error occurred'
@@ -130,7 +128,9 @@ export const getAgent = async (agentId) => {
  * @returns {Promise<Object>} Created agent
  */
 export const createAgent = async (agentData) => {
+  console.log('Creating agent with data:', agentData)
   const response = await api.post('/agents', agentData)
+  console.log('Agent creation response:', response.data)
   return response.data
 }
 

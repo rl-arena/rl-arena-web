@@ -1,14 +1,18 @@
 import React, { useState } from 'react'
-import { useNavigate, Link } from 'react-router-dom'
+import { useNavigate, Link, useLocation } from 'react-router-dom'
 import useAuth from '../hooks/useAuth'
 import LoadingSpinner from '../components/common/LoadingSpinner'
 
 const Login = () => {
   const navigate = useNavigate()
+  const location = useLocation()
   const { login, loading, error: authError } = useAuth()
   
+  // Get the page user came from, default to home
+  const from = location.state?.from?.pathname || '/'
+  
   const [formData, setFormData] = useState({
-    username: '',
+    email: '',
     password: ''
   })
   const [error, setError] = useState('')
@@ -26,7 +30,7 @@ const Login = () => {
     setError('')
 
     // Validation
-    if (!formData.username.trim() || !formData.password) {
+    if (!formData.email.trim() || !formData.password) {
       setError('Please fill in all fields')
       return
     }
@@ -34,7 +38,8 @@ const Login = () => {
     try {
       const result = await login(formData)
       if (result.success) {
-        navigate('/')
+        // Redirect to the page user came from or home
+        navigate(from, { replace: true })
       } else {
         setError(result.error || 'Login failed')
       }
@@ -74,19 +79,19 @@ const Login = () => {
           )}
 
           <div className="rounded-md shadow-sm space-y-4">
-            {/* Username */}
+            {/* Email */}
             <div>
-              <label htmlFor="username" className="block text-sm font-medium text-gray-700 mb-1">
-                Username
+              <label htmlFor="email" className="block text-sm font-medium text-gray-700 mb-1">
+                Email
               </label>
               <input
-                id="username"
-                name="username"
-                type="text"
+                id="email"
+                name="email"
+                type="email"
                 required
                 className="appearance-none relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 rounded-md focus:outline-none focus:ring-primary-500 focus:border-primary-500 focus:z-10 sm:text-sm"
-                placeholder="Enter your username"
-                value={formData.username}
+                placeholder="Enter your email"
+                value={formData.email}
                 onChange={handleChange}
                 disabled={loading}
               />

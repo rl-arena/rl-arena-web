@@ -8,10 +8,12 @@ import ReplayModal from '../components/replay/ReplayModal'
 import LoadingSpinner from '../components/common/LoadingSpinner'
 import useCompetitions from '../hooks/useCompetitions'
 import useLeaderboard from '../hooks/useLeaderboard'
+import useAuth from '../hooks/useAuth'
 import { getUserSubmissions } from '../services/api'
 
 const CompetitionDetail = () => {
   const { envId } = useParams()
+  const { isAuthenticated } = useAuth()
   const { fetchCompetition, selectedCompetition, loading: competitionLoading } = useCompetitions(false)
   const [submissions, setSubmissions] = useState([])
   const [submissionsLoading, setSubmissionsLoading] = useState(false)
@@ -34,12 +36,20 @@ const CompetitionDetail = () => {
   useEffect(() => {
     if (envId) {
       fetchCompetition(envId)
-      loadSubmissions()
+      // Only load submissions if user is authenticated
+      if (isAuthenticated) {
+        loadSubmissions()
+      }
     }
-  }, [envId]) // eslint-disable-line react-hooks/exhaustive-deps
+  }, [envId, isAuthenticated]) // eslint-disable-line react-hooks/exhaustive-deps
 
-  // Load user submissions
+  // Load user submissions (only called when authenticated)
   const loadSubmissions = async () => {
+    if (!isAuthenticated) {
+      setSubmissions([])
+      return
+    }
+    
     setSubmissionsLoading(true)
     try {
       const data = await getUserSubmissions(envId)

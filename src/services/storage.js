@@ -63,11 +63,13 @@ export const clear = () => {
 // Auth-specific helpers
 
 export const getAuthToken = () => {
-  return getItem(STORAGE_KEYS.AUTH_TOKEN)
+  // Get token as plain string, not JSON
+  return localStorage.getItem(STORAGE_KEYS.AUTH_TOKEN)
 }
 
 export const setAuthToken = (token) => {
-  setItem(STORAGE_KEYS.AUTH_TOKEN, token)
+  // Store token as plain string, not JSON
+  localStorage.setItem(STORAGE_KEYS.AUTH_TOKEN, token)
 }
 
 export const removeAuthToken = () => {

@@ -1,11 +1,15 @@
 import React, { useState } from 'react'
-import { useNavigate, Link } from 'react-router-dom'
+import { useNavigate, Link, useLocation } from 'react-router-dom'
 import useAuth from '../hooks/useAuth'
 import LoadingSpinner from '../components/common/LoadingSpinner'
 
 const Signup = () => {
   const navigate = useNavigate()
+  const location = useLocation()
   const { register, loading, error: authError } = useAuth()
+  
+  // Get the page user came from, default to home
+  const from = location.state?.from?.pathname || '/'
   
   const [formData, setFormData] = useState({
     username: '',
@@ -86,7 +90,8 @@ const Signup = () => {
       })
 
       if (result.success) {
-        navigate('/')
+        // Redirect to the page user came from or home
+        navigate(from, { replace: true })
       } else {
         setErrors({ submit: result.error || 'Registration failed' })
       }

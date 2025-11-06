@@ -1,5 +1,5 @@
 import React, { useState } from 'react'
-import { Link } from 'react-router-dom'
+import { Link, useLocation } from 'react-router-dom'
 import FileDropzone from './FileDropzone'
 import Button from '../common/Button'
 import useAgentSubmission from '../../hooks/useAgentSubmission'
@@ -13,6 +13,7 @@ import useAuth from '../../hooks/useAuth'
  */
 const AgentUploadForm = ({ envId, onSuccess }) => {
   const { isAuthenticated } = useAuth()
+  const location = useLocation()
   const [file, setFile] = useState(null)
   const [agentName, setAgentName] = useState('')
   const { loading, error, success, submit, reset } = useAgentSubmission(envId)
@@ -59,12 +60,14 @@ const AgentUploadForm = ({ envId, onSuccess }) => {
           <div className="flex gap-3 justify-center">
             <Link
               to="/login"
+              state={{ from: location }}
               className="px-4 py-2 text-sm font-medium text-white bg-primary-600 hover:bg-primary-700 rounded-md transition-colors"
             >
               Login
             </Link>
             <Link
               to="/signup"
+              state={{ from: location }}
               className="px-4 py-2 text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 border border-gray-300 rounded-md transition-colors"
             >
               Sign Up

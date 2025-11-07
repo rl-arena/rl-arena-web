@@ -318,12 +318,28 @@ export const getAgentMatches = async (agentId, page = 1, pageSize = 20) => {
 /**
  * Get match replay data
  * @param {string} matchId - Match ID
- * @returns {Promise<Object>} Replay data with frames and metadata
+ * @param {string} format - Replay format ('json' or 'html')
+ * @returns {Promise<Object|string>} Replay data (JSON object or HTML string)
  */
-export const getMatchReplay = async (matchId) => {
+export const getMatchReplay = async (matchId, format = 'json') => {
   const replayUrl = `/matches/${matchId}/replay`
-  const response = await api.get(replayUrl)
+  const response = await api.get(replayUrl, { 
+    params: { format },
+    // For HTML format, we need to handle it as text
+    ...(format === 'html' && { responseType: 'text' })
+  })
   return response.data
+}
+
+/**
+ * Get match replay URL
+ * @param {string} matchId - Match ID
+ * @param {string} format - Replay format ('json' or 'html')
+ * @returns {string} Full replay URL
+ */
+export const getMatchReplayURL = (matchId, format = 'json') => {
+  const baseURL = api.defaults.baseURL || ''
+  return `${baseURL}/matches/${matchId}/replay?format=${format}`
 }
 
 // ======================

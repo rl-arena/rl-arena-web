@@ -1,9 +1,11 @@
 import { create } from 'zustand'
-import { getMatchReplay } from '../services/api'
+import { getMatchReplay, getMatchReplayURL } from '../services/api'
 import { DEFAULT_PLAYBACK_SPEED } from '../utils/constants'
 
 const useReplayStore = create((set, get) => ({
   replayData: null,
+  replayHTML: null,
+  replayFormat: 'json', // 'json' or 'html'
   currentFrame: 0,
   isPlaying: false,
   playbackSpeed: DEFAULT_PLAYBACK_SPEED,
@@ -14,18 +16,31 @@ const useReplayStore = create((set, get) => ({
   /**
    * Load replay data
    * @param {string} matchId - Match ID
+   * @param {string} format - Replay format ('json' or 'html')
    */
-  loadReplay: async (matchId) => {
-    set({ loading: true, error: null })
+  loadReplay: async (matchId, format = 'json') => {
+    set({ loading: true, error: null, replayFormat: format })
     try {
-      const replayData = await getMatchReplay(matchId)
-      set({ 
-        replayData, 
-        currentFrame: 0,
-        isPlaying: false,
-        loading: false 
-      })
-      return { success: true, data: replayData }
+      const data = await getMatchReplay(matchId, format)
+      
+      if (format === 'html') {
+        set({ 
+          replayHTML: data,
+          replayData: null,
+          currentFrame: 0,
+          isPlaying: false,
+          loading: false 
+        })
+      } else {
+        set({ 
+          replayData: data,
+          replayHTML: null,
+          currentFrame: 0,
+          isPlaying: false,
+          loading: false 
+        })
+      }
+      return { success: true, data }
     } catch (error) {
       set({ 
         error: error.message, 
@@ -33,6 +48,16 @@ const useReplayStore = create((set, get) => ({
       })
       return { success: false, error: error.message }
     }
+  },
+
+  /**
+   * Get replay URL
+   * @param {string} matchId - Match ID
+   * @param {string} format - Replay format ('json' or 'html')
+   * @returns {string} Replay URL
+   */
+  getReplayURL: (matchId, format = 'json') => {
+    return getMatchReplayURL(matchId, format)
   },
 
   /**
@@ -137,6 +162,8 @@ const useReplayStore = create((set, get) => ({
     state.pause()
     set({ 
       replayData: null,
+      replayHTML: null,
+      replayFormat: 'json',
       currentFrame: 0,
       isPlaying: false,
       playbackSpeed: DEFAULT_PLAYBACK_SPEED,

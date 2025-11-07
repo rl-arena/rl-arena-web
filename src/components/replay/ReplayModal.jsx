@@ -1,4 +1,4 @@
-import React, { useEffect } from 'react'
+import React, { useEffect, useState } from 'react'
 import ReplayCanvas from './ReplayCanvas'
 import ReplayControls from './ReplayControls'
 import LoadingSpinner from '../common/LoadingSpinner'
@@ -14,14 +14,19 @@ import { formatDate } from '../../utils/formatters'
  * @param {Object} props.metadata - Match metadata (agent names, score, etc.)
  */
 const ReplayModal = ({ isOpen, onClose, matchId, metadata = {} }) => {
+  const [selectedFormat, setSelectedFormat] = useState('html') // Default to HTML for better UX
+  
   const {
     replayData,
+    replayHTML,
+    replayFormat,
     currentFrame,
     isPlaying,
     playbackSpeed,
     loading,
     error,
     loadReplay,
+    getReplayURL,
     togglePlay,
     setFrame,
     setSpeed,
@@ -32,7 +37,7 @@ const ReplayModal = ({ isOpen, onClose, matchId, metadata = {} }) => {
 
   useEffect(() => {
     if (isOpen && matchId) {
-      loadReplay(matchId)
+      loadReplay(matchId, selectedFormat)
     }
 
     return () => {
@@ -40,7 +45,7 @@ const ReplayModal = ({ isOpen, onClose, matchId, metadata = {} }) => {
         clearReplay()
       }
     }
-  }, [isOpen, matchId]) // eslint-disable-line react-hooks/exhaustive-deps
+  }, [isOpen, matchId, selectedFormat]) // eslint-disable-line react-hooks/exhaustive-deps
 
   // Close on escape key
   useEffect(() => {
@@ -83,14 +88,43 @@ const ReplayModal = ({ isOpen, onClose, matchId, metadata = {} }) => {
               )}
             </div>
             
-            <button
-              onClick={onClose}
-              className="text-gray-400 hover:text-gray-600 transition-colors"
-            >
-              <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-              </svg>
-            </button>
+            <div className="flex items-center gap-4">
+              {/* Format Toggle */}
+              <div className="flex items-center bg-gray-100 rounded-lg p-1">
+                <button
+                  onClick={() => setSelectedFormat('html')}
+                  className={`px-3 py-1.5 text-sm font-medium rounded-md transition-colors ${
+                    selectedFormat === 'html'
+                      ? 'bg-white text-primary-600 shadow-sm'
+                      : 'text-gray-600 hover:text-gray-900'
+                  }`}
+                  disabled={loading}
+                >
+                  HTML
+                </button>
+                <button
+                  onClick={() => setSelectedFormat('json')}
+                  className={`px-3 py-1.5 text-sm font-medium rounded-md transition-colors ${
+                    selectedFormat === 'json'
+                      ? 'bg-white text-primary-600 shadow-sm'
+                      : 'text-gray-600 hover:text-gray-900'
+                  }`}
+                  disabled={loading}
+                >
+                  JSON
+                </button>
+              </div>
+
+              {/* Close Button */}
+              <button
+                onClick={onClose}
+                className="text-gray-400 hover:text-gray-600 transition-colors"
+              >
+                <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                </svg>
+              </button>
+            </div>
           </div>
 
           {/* Content */}
@@ -109,9 +143,35 @@ const ReplayModal = ({ isOpen, onClose, matchId, metadata = {} }) => {
                   Close
                 </button>
               </div>
+            ) : replayFormat === 'html' && replayHTML ? (
+              <>
+                {/* HTML Replay - Embedded in iframe */}
+                <div className="bg-gray-900 rounded-lg overflow-hidden">
+                  <iframe
+                    srcDoc={replayHTML}
+                    className="w-full h-[600px] border-0"
+                    title="Match Replay"
+                    sandbox="allow-scripts"
+                  />
+                </div>
+                
+                {/* Download Link */}
+                <div className="mt-4 text-center">
+                  <a
+                    href={getReplayURL(matchId, 'html')}
+                    download={`replay-${matchId}.html`}
+                    className="inline-flex items-center gap-2 text-sm text-primary-600 hover:text-primary-700"
+                  >
+                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+                    </svg>
+                    Download HTML Replay
+                  </a>
+                </div>
+              </>
             ) : replayData ? (
               <>
-                {/* Canvas */}
+                {/* JSON Replay - Canvas rendering */}
                 <ReplayCanvas
                   frameData={frameData}
                   width={800}

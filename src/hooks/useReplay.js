@@ -9,12 +9,15 @@ import useReplayStore from '../store/replayStore'
 const useReplay = (matchId = null) => {
   const {
     replayData,
+    replayHTML,
+    replayFormat,
     currentFrame,
     isPlaying,
     playbackSpeed,
     loading,
     error,
     loadReplay,
+    getReplayURL,
     play,
     pause,
     togglePlay,
@@ -71,12 +74,15 @@ const useReplay = (matchId = null) => {
 
   return {
     replayData,
+    replayHTML,
+    replayFormat,
     currentFrame,
     isPlaying,
     playbackSpeed,
     loading,
     error,
     loadReplay,
+    getReplayURL,
     play,
     pause,
     togglePlay,

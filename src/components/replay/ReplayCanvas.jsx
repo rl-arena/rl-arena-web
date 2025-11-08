@@ -26,10 +26,10 @@ const ReplayCanvas = ({ frameData, width = 800, height = 450 }) => {
 
   /**
    * Render a single frame
-   * This is a placeholder implementation - actual rendering depends on game type
+   * Supports Pong game replay visualization
    */
   const renderFrame = (ctx, frame, canvasWidth, canvasHeight) => {
-    if (!frame || !frame.state) {
+    if (!frame || !frame.info) {
       // No frame data - show placeholder
       ctx.fillStyle = '#333'
       ctx.fillRect(0, 0, canvasWidth, canvasHeight)
@@ -40,43 +40,71 @@ const ReplayCanvas = ({ frameData, width = 800, height = 450 }) => {
       return
     }
 
-    // TODO: Implement game-specific rendering
-    // Example for Pong:
-    // const { ball, paddle1, paddle2 } = frame.state
-    // 
-    // // Draw ball
-    // ctx.fillStyle = '#fff'
-    // ctx.beginPath()
-    // ctx.arc(ball.x, ball.y, ball.radius, 0, Math.PI * 2)
-    // ctx.fill()
-    // 
-    // // Draw paddles
-    // ctx.fillRect(paddle1.x, paddle1.y, paddle1.width, paddle1.height)
-    // ctx.fillRect(paddle2.x, paddle2.y, paddle2.width, paddle2.height)
+    // Extract Pong game state from frame.info
+    const { ball_pos, paddle_positions, score } = frame.info
+    
+    if (!ball_pos || !paddle_positions || !score) {
+      // Invalid frame structure
+      ctx.fillStyle = '#333'
+      ctx.fillRect(0, 0, canvasWidth, canvasHeight)
+      ctx.fillStyle = '#fff'
+      ctx.font = '16px Arial'
+      ctx.textAlign = 'center'
+      ctx.fillText('Invalid frame structure', canvasWidth / 2, canvasHeight / 2)
+      return
+    }
 
-    // Placeholder rendering
-    ctx.fillStyle = '#1f2937'
+    // Clear canvas with dark background
+    ctx.fillStyle = '#1a1a2e'
     ctx.fillRect(0, 0, canvasWidth, canvasHeight)
     
-    // Draw border
-    ctx.strokeStyle = '#14b8a6'
+    // Draw center line
+    ctx.strokeStyle = '#444466'
     ctx.lineWidth = 2
+    ctx.setLineDash([10, 10])
+    ctx.beginPath()
+    ctx.moveTo(canvasWidth / 2, 0)
+    ctx.lineTo(canvasWidth / 2, canvasHeight)
+    ctx.stroke()
+    ctx.setLineDash([])
+    
+    // Draw border
+    ctx.strokeStyle = '#444466'
+    ctx.lineWidth = 3
     ctx.strokeRect(0, 0, canvasWidth, canvasHeight)
     
-    // Show frame info
-    ctx.fillStyle = '#14b8a6'
-    ctx.font = '16px monospace'
+    // Convert normalized coordinates (0-1) to canvas coordinates
+    const ballX = ball_pos[0] * canvasWidth
+    const ballY = ball_pos[1] * canvasHeight
+    const paddle1Y = paddle_positions[0] * canvasHeight
+    const paddle2Y = paddle_positions[1] * canvasHeight
+    
+    const paddleWidth = 10
+    const paddleHeight = 60
+    const ballRadius = 8
+    
+    // Draw left paddle (player 1) - green
+    ctx.fillStyle = '#00ff88'
+    ctx.fillRect(20, paddle1Y - paddleHeight / 2, paddleWidth, paddleHeight)
+    
+    // Draw right paddle (player 2) - magenta
+    ctx.fillStyle = '#ff0088'
+    ctx.fillRect(canvasWidth - 30, paddle2Y - paddleHeight / 2, paddleWidth, paddleHeight)
+    
+    // Draw ball - white
+    ctx.fillStyle = '#ffffff'
+    ctx.beginPath()
+    ctx.arc(ballX, ballY, ballRadius, 0, Math.PI * 2)
+    ctx.fill()
+    
+    // Draw scores
+    ctx.fillStyle = '#00ff88'
+    ctx.font = 'bold 48px monospace'
     ctx.textAlign = 'center'
-    ctx.fillText(
-      'Game replay will render here',
-      canvasWidth / 2,
-      canvasHeight / 2 - 10
-    )
-    ctx.fillText(
-      `Frame: ${JSON.stringify(frame.state).substring(0, 50)}...`,
-      canvasWidth / 2,
-      canvasHeight / 2 + 20
-    )
+    ctx.fillText(score[0], canvasWidth / 4, 60)
+    
+    ctx.fillStyle = '#ff0088'
+    ctx.fillText(score[1], (canvasWidth / 4) * 3, 60)
   }
 
   return (

@@ -9,17 +9,40 @@ import { AGENT_STATUS } from '../../utils/constants'
  * @param {boolean} props.loading - Loading state
  */
 const SubmissionHistory = ({ submissions = [], loading = false }) => {
-  const getStatusBadge = (status) => {
+  const getStatusBadge = (submission) => {
+    // is_active가 true면 Active (초록색), false면 Inactive (회색)
+    if (submission.isActive) {
+      return (
+        <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
+          Active
+        </span>
+      )
+    }
+    
+    // isActive가 false인 경우
+    if (submission.status === 'success') {
+      return (
+        <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-800">
+          Inactive
+        </span>
+      )
+    }
+    
+    // 다른 상태들
     const badges = {
-      [AGENT_STATUS.PENDING]: 'bg-yellow-100 text-yellow-800',
-      [AGENT_STATUS.PROCESSING]: 'bg-blue-100 text-blue-800',
-      [AGENT_STATUS.ACTIVE]: 'bg-green-100 text-green-800',
-      [AGENT_STATUS.FAILED]: 'bg-red-100 text-red-800',
+      'pending': 'bg-yellow-100 text-yellow-800',
+      'building': 'bg-blue-100 text-blue-800',
+      'build_failed': 'bg-red-100 text-red-800',
+      'failed': 'bg-red-100 text-red-800',
+      'inactive': 'bg-gray-100 text-gray-800',
     }
 
+    const displayText = submission.status
+    const badgeClass = badges[submission.status] || 'bg-gray-100 text-gray-800'
+
     return (
-      <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${badges[status] || 'bg-gray-100 text-gray-800'}`}>
-        {status}
+      <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${badgeClass}`}>
+        {displayText}
       </span>
     )
   }
@@ -71,9 +94,9 @@ const SubmissionHistory = ({ submissions = [], loading = false }) => {
             >
               <div className="flex items-center justify-between mb-2">
                 <h3 className="font-medium text-gray-900">
-                  {submission.name || submission.agentName}
+                  ver{submission.version || 1}
                 </h3>
-                {getStatusBadge(submission.status)}
+                {getStatusBadge(submission)}
               </div>
               
               <div className="flex items-center text-sm text-gray-500">

@@ -359,12 +359,13 @@ export const getGlobalLeaderboard = async (limit = 100) => {
 /**
  * Get leaderboard for a specific environment
  * @param {string} envId - Environment ID
- * @param {number} limit - Number of agents to return
+ * @param {number} page - Page number (optional)
+ * @param {number} pageSize - Number of agents per page (optional)
  * @returns {Promise<Object>} Leaderboard entries with environment info
  */
-export const getLeaderboard = async (envId, limit = 100) => {
+export const getLeaderboard = async (envId, page = 1, pageSize = 100) => {
   const response = await api.get(`/leaderboard/environment/${envId}`, {
-    params: { limit }
+    params: { limit: pageSize }
   })
   return response.data
 }

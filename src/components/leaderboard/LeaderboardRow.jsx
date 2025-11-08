@@ -25,13 +25,13 @@ const LeaderboardRow = ({ entry, isCurrentUser = false, onWatchReplay }) => {
       {/* Score */}
       <td className="px-6 py-4 whitespace-nowrap">
         <div className="text-sm text-gray-900">
-          {Math.round(entry.eloRating || entry.score || 0)}
+          {Math.round(entry.score || entry.elo || 0)}
         </div>
       </td>
 
       {/* Matches Played */}
       <td className="px-6 py-4 whitespace-nowrap">
-        <div className="text-sm text-gray-700">{entry.matchesPlayed}</div>
+        <div className="text-sm text-gray-700">{entry.totalMatches || 0}</div>
       </td>
 
       {/* Actions */}

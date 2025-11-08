@@ -18,6 +18,9 @@ const CompetitionDetail = () => {
   const [submissions, setSubmissions] = useState([])
   const [submissionsLoading, setSubmissionsLoading] = useState(false)
   const [replayModal, setReplayModal] = useState({ isOpen: false, matchId: null, metadata: {} })
+  const [matchList, setMatchList] = useState([])
+  const [selectedAgent, setSelectedAgent] = useState(null)
+  const [showMatchSelection, setShowMatchSelection] = useState(false)
 
   // Leaderboard hook
   const {
@@ -69,17 +72,59 @@ const CompetitionDetail = () => {
   }
 
   // Handle watch replay
-  const handleWatchReplay = (entry) => {
-    // TODO: Get actual match ID from entry
-    const matchId = `match_${entry.rank}`
+  const handleWatchReplay = async (entry) => {
+    console.log('Watch replay clicked for entry:', entry) // Debug log
+    
+    if (!entry || !entry.id) {
+      alert('Agent information not available')
+      console.error('Invalid entry:', entry)
+      return
+    }
+    
+    try {
+      // Fetch recent matches for this agent (limit to 10)
+      const response = await fetch(`/api/v1/matches/agent/${entry.id}?limit=10`)
+      if (!response.ok) throw new Error('Failed to fetch matches')
+      
+      const data = await response.json()
+      console.log('Matches fetched:', data) // Debug log
+      
+      if (data.matches && data.matches.length > 0) {
+        // If only one match, open directly
+        if (data.matches.length === 1) {
+          setReplayModal({
+            isOpen: true,
+            matchId: data.matches[0].id,
+            metadata: {
+              agent1: entry.name || entry.username,
+              agent2: 'Opponent',
+            },
+          })
+        } else {
+          // Show match selection modal
+          setMatchList(data.matches)
+          setSelectedAgent(entry)
+          setShowMatchSelection(true)
+        }
+      } else {
+        alert('No matches found for this agent')
+      }
+    } catch (error) {
+      console.error('Error fetching matches:', error)
+      alert('Failed to load matches')
+    }
+  }
+
+  const handleSelectMatch = (match) => {
     setReplayModal({
       isOpen: true,
-      matchId,
+      matchId: match.id,
       metadata: {
-        agent1: entry.agentName,
+        agent1: selectedAgent?.name || selectedAgent?.username,
         agent2: 'Opponent',
       },
     })
+    setShowMatchSelection(false)
   }
 
   // Close replay modal
@@ -161,6 +206,73 @@ const CompetitionDetail = () => {
         matchId={replayModal.matchId}
         metadata={replayModal.metadata}
       />
+
+      {/* Match Selection Modal */}
+      {showMatchSelection && (
+        <div className="fixed inset-0 z-50 overflow-y-auto">
+          <div 
+            className="fixed inset-0 bg-black bg-opacity-75 transition-opacity"
+            onClick={() => setShowMatchSelection(false)}
+          />
+          <div className="flex min-h-screen items-center justify-center p-4">
+            <div className="relative bg-white rounded-lg shadow-xl max-w-2xl w-full p-6">
+              <h2 className="text-xl font-semibold text-gray-900 mb-4">
+                Select a Match to Watch
+              </h2>
+              <div className="space-y-2 max-h-96 overflow-y-auto">
+                {matchList.map((match, index) => {
+                  const isAgent1 = match.agent1Id === selectedAgent?.id
+                  const myScore = isAgent1 ? match.agent1Score : match.agent2Score
+                  const opponentScore = isAgent1 ? match.agent2Score : match.agent1Score
+                  const won = match.winnerId === selectedAgent?.id
+                  const lost = match.winnerId && match.winnerId !== selectedAgent?.id
+                  const draw = !match.winnerId
+                  
+                  return (
+                    <button
+                      key={match.id}
+                      onClick={() => handleSelectMatch(match)}
+                      className="w-full text-left p-4 border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors"
+                    >
+                      <div className="flex justify-between items-center">
+                        <div>
+                          <div className="font-medium text-gray-900">
+                            Match #{matchList.length - index}
+                          </div>
+                          <div className="text-sm text-gray-600 mt-1">
+                            Score: {Math.round(myScore)} - {Math.round(opponentScore)}
+                            {won && (
+                              <span className="ml-2 text-green-600 font-semibold">✓ Won</span>
+                            )}
+                            {lost && (
+                              <span className="ml-2 text-red-600 font-semibold">✗ Lost</span>
+                            )}
+                            {draw && (
+                              <span className="ml-2 text-gray-500">- Draw</span>
+                            )}
+                          </div>
+                          <div className="text-xs text-gray-500 mt-1">
+                            {new Date(match.createdAt).toLocaleString('ko-KR')}
+                          </div>
+                        </div>
+                        <svg className="w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                        </svg>
+                      </div>
+                    </button>
+                  )
+                })}
+              </div>
+              <button
+                onClick={() => setShowMatchSelection(false)}
+                className="mt-4 w-full px-4 py-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 transition-colors"
+              >
+                Cancel
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   )
 }

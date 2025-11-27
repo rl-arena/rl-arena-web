@@ -13,21 +13,42 @@ permissions:
   id-token: write
 
 jobs:
+  # 1. 빌드 및 아티팩트 생성 (dist 폴더)
   build:
     runs-on: ubuntu-latest
     steps:
-      # ... (생략된 Checkout, Setup Node, Install dependencies, Build project 단계) ...
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        # 🚨 핵심 수정: 코드를 현재 작업 디렉토리(루트)에 바로 가져오도록 설정
+        with:
+          path: .  
+      
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '18'
+
+      - name: Install dependencies
+        run: npm install
+
       - name: Build project (Vite)
+        # 이 단계에서 vite.config.js의 base 설정이 적용됩니다.
         run: npm run build 
+
       - name: Setup Pages 
-        uses: actions/configure-pages@v4
+        uses: actions/configure-pages@v4 # 배포를 위한 환경 설정
+
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v3
         with:
+          # Vite의 빌드 결과물 폴더인 dist를 업로드합니다.
           path: './dist' 
-  
+
+  # 2. 배포 (Pages에 업로드된 아티팩트를 배포)
   deploy:
-    # ... (생략된 Deploy to GitHub Pages 단계) ...
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
     runs-on: ubuntu-latest
     needs: build
     steps:

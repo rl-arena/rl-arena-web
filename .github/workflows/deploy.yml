@@ -1,0 +1,32 @@
+name: Deploy to GitHub Pages
+
+on:
+  push:
+    branches:
+      - main # main 브랜치에 푸시될 때마다 실행
+
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout 🛎️
+        uses: actions/checkout@v3
+
+      - name: Install dependencies 🔧
+        run: npm install
+
+      - name: Build project 🏗️
+        run: npm run build
+        env:
+          # VITE_APP_BASE_URL 환경 변수가 있다면 여기에 설정
+          # VITE의 base 설정은 vite.config.js에서 이미 했으므로 생략 가능
+          VITE_BASE_URL: /rl-arena-web/
+
+      - name: Deploy to GitHub Pages 🚀
+        uses: peaceiris/actions-gh-pages@v3
+        with:
+          # GitHub Pages에 배포할 폴더 (Vite의 기본 출력 폴더)
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          publish_dir: ./dist
+          # 서브 경로(subpath) 배포를 위해 반드시 필요
+          force_orphan: true

@@ -1,5 +1,5 @@
 import React from 'react'
-import { BrowserRouter as Router, Routes, Route } from 'react-router-dom'
+import { HashRouter, Routes, Route } from 'react-router-dom' 
 import Layout from './components/layout/Layout'
 import Home from './pages/Home'
 import CompetitionDetail from './pages/CompetitionDetail'
@@ -13,9 +13,11 @@ function App() {
   
   return (
     <ErrorBoundary>
-      <Router>
+      {/* 🚨 HashRouter 컴포넌트로 변경합니다. */}
+      <HashRouter> 
         <Layout>
           <Routes>
+            {/* HashRouter를 사용하면 URL이 #/login, #/profile 형태로 바뀝니다. */}
             <Route path="/" element={<Home />} />
             <Route path="/login" element={<Login />} />
             <Route path="/signup" element={<Signup />} />
@@ -23,7 +25,7 @@ function App() {
             <Route path="/profile" element={<Profile />} />
           </Routes>
         </Layout>
-      </Router>
+      </HashRouter>
     </ErrorBoundary>
   )
 }

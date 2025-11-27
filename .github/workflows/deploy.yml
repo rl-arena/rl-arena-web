@@ -1,38 +1,36 @@
-name: Deploy to GitHub Pages
+name: Deploy Vite Project to GitHub Pages
 
 on:
   push:
     branches:
-      - main # main 브랜치에 푸시될 때마다 실행
+      - main
+  workflow_dispatch:
 
-# 🚨 필수 추가: exit code 128 (Git 권한 오류) 해결을 위한 권한 설정
-# 이 설정이 없으면 GitHub Actions는 배포 브랜치에 푸시할 수 없습니다.
+# Git 권한 문제를 해결하는 핵심 블록
 permissions:
-  contents: write # 리포지토리 내용을 읽고, 배포 브랜치에 쓸 권한을 부여합니다.
-  pages: write    # GitHub Pages 배포 관련 권한을 부여합니다.
+  contents: write
+  pages: write
+  id-token: write
 
 jobs:
-  build-and-deploy:
+  build:
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout 🛎️
-        uses: actions/checkout@v3
-
-      - name: Set up Node.js ☕
-        uses: actions/setup-node@v3
+      # ... (생략된 Checkout, Setup Node, Install dependencies, Build project 단계) ...
+      - name: Build project (Vite)
+        run: npm run build 
+      - name: Setup Pages 
+        uses: actions/configure-pages@v4
+      - name: Upload artifact
+        uses: actions/upload-pages-artifact@v3
         with:
-          node-version: '18'
-
-      - name: Install dependencies 🔧
-        run: npm install
-
-      - name: Build project 🏗️
-        run: npm run build
-        # 이 단계에서 vite.config.js의 base: '/rl-arena-web/' 설정이 적용됩니다.
-
-      - name: Deploy to GitHub Pages 🚀
-        uses: peaceiris/actions-gh-pages@v3
-        with:
-          github_token: ${{ secrets.GITHUB_TOKEN }}
-          publish_dir: ./dist # Vite의 빌드 결과물 폴더
-          force_orphan: true
+          path: './dist' 
+  
+  deploy:
+    # ... (생략된 Deploy to GitHub Pages 단계) ...
+    runs-on: ubuntu-latest
+    needs: build
+    steps:
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4
